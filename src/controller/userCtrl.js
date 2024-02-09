@@ -18,33 +18,41 @@ const createUser = asyncHandler(async (req, res) => {
   }
 });
 
+// authController.js
 const loginUserCtrl = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
-  // check if user exists or not
-  const findUser = await User.findOne({ email });
-  if (findUser && (await findUser.isPasswordMatched(password))) {
-    const refreshToken = await generateRefreshToken(findUser?._id);
-    const updateuser = await User.findByIdAndUpdate(
-      findUser?.id,
-      {
-        refreshToken: refreshToken,
-      },
-      { new: true }
-    );
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      maxAge: 72 * 60 * 60 * 1000,
-    });
-    res.json({
-      _id: findUser?._id,
-      firstname: findUser?.firstname,
-      lastname: findUser?.lastname,
-      email: findUser?.email,
-      phone: findUser?.phone,
-      token: generateToken(findUser?._id),
-    });
+  const { email, password, method } = req.body;
+
+  if (method === "qr") {
+    // Xử lý đăng nhập bằng mã QR
+    // ...
   } else {
-    throw new Error("Invalid email or password");
+    // Bước 1: Kiểm tra email và password
+    const findUser = await User.findOne({ email });
+
+    if (!findUser || !(await findUser.isPasswordMatched(password))) {
+      throw new Error("Invalid email or password");
+    }
+
+    // Bước 2: Tạo và gửi mã xác minh 6 số
+    const verificationCode = Math.floor(100000 + Math.random() * 900000)
+      .toString()
+      .padStart(6, "0");
+
+    // Lưu mã xác minh vào cơ sở dữ liệu
+    findUser.verificationCode = verificationCode;
+    findUser.verificationCodeExpires = Date.now() + 10 * 60 * 1000; // 10 phút
+    await findUser.save();
+
+    // Gửi email chứa mã xác minh
+    const data = {
+      from: "so7ngovanso@gmail.com",
+      to: email,
+      subject: "Verification Code",
+      text: `Your verification code is: ${verificationCode}`,
+    };
+    sendEmail(data);
+
+    res.json({ verificationCode });
   }
 });
 

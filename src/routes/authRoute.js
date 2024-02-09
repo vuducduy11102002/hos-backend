@@ -15,6 +15,10 @@ const {
   resetPassword,
 } = require("../controller/userCtrl");
 
+const {
+  SendCodeAuthentication,
+} = require("../controller/two-face-authentication/authenticationCtrl");
+
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 const router = express.Router();
 router.post("/register", createUser);
@@ -23,8 +27,9 @@ router.put("/reset-password/:token", resetPassword);
 router.post("/login", loginUserCtrl);
 router.get("/logout", logout);
 router.get("/refresh", handleRefreshToken);
-router.use(authMiddleware);
 router.put("/password", updatePassword);
+router.post("/2fa", SendCodeAuthentication);
+router.use(authMiddleware);
 router.get("/all-users", getAllUser);
 router.get("/:id", getaUser);
 router.delete("/:id", deleteUser);
