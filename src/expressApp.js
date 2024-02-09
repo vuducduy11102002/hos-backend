@@ -8,6 +8,7 @@ const patientRouter = require("./routes/patientRoute");
 const doctorRouter = require("./routes/doctorRoute");
 const appointmentRouter = require("./routes/appointmentRoute");
 const notificationRouter = require("./routes/notificationRoute");
+const predictRouter = require("./routes/predictRoute");
 const morgan = require("morgan");
 const cors = require("cors");
 
@@ -18,7 +19,7 @@ module.exports = (app) => {
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(cookiesParser());
-
+  app.use(`${api}/predict`, predictRouter);
   app.use(`${api}/user`, authRouter);
   app.use(`${api}/patient`, patientRouter);
   app.use(`${api}/doctor`, doctorRouter);
