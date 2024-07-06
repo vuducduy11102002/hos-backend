@@ -12,10 +12,24 @@ const StartServer = () => {
   app.use("/public/uploads", express.static(__dirname + "/public/uploads"));
   app.use(
     cors({
-      origin: ["http://localhost:4200", "http://localhost:3000"],
+      origin: [
+        "http://localhost:4200",
+        "http://localhost:3000",
+        "http://localhost:4100",
+      ],
       methods: "*",
     })
   );
+  // Cấu hình để cung cấp header 'Access-Control-Allow-Origin'
+  app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Origin, X-Requested-With, Content-Type, Accept"
+    );
+    next();
+  });
+
   dbConnect();
   expressApp(app);
   app.listen(PORT, () => {

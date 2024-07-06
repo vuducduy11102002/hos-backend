@@ -8,11 +8,21 @@ services:
     volumes:
       - ./data/db:/data/db
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - .data/rabbitmq/data/:/var/lib/rabbitmq/
+      - .data/rabbitmq/log/:/var/log/rabbitmq
+
   app:
     build: .
     ports:
       - 3000:3000
     depends_on:
       - mongodb
+      - rabbitmq
     environment:
       MONGODB_URI: mongodb://mongodb:27017

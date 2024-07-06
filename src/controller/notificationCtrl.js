@@ -3,7 +3,7 @@ const asyncHandler = require("express-async-handler");
 const RequestAppointment = require("../models/notificationModel");
 const Doctor = require("../models/doctorModel");
 const Appointment = require("../models/appointmentModel");
-const { sendMessageToRabbitMQ } = require("./queue/sendMS");
+const { sendMessageToRabbitMQ } = require("./queue/sendms");
 
 const sendNotification = asyncHandler(async (req, res) => {
   try {

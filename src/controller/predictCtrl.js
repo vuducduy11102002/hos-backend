@@ -5,7 +5,7 @@ const csvParser = require("csv-parser");
 const fs = require("fs");
 const multer = require("multer");
 const path = require("path");
-
+const moment = require("moment");
 const createPredict = asyncHandler(async (req, res) => {
   try {
     // Extract relevant data from req.body
@@ -198,6 +198,69 @@ const createPredictFileCsv = asyncHandler(async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+const resultFolderPath = "C:\\Hospital\\hos-backend\\result";
+
+const getFileCsv = asyncHandler(async (req, res) => {
+  try {
+    // Check and create the result folder if it doesn't exist
+    if (!fs.existsSync(resultFolderPath)) {
+      fs.mkdirSync(resultFolderPath);
+    }
+
+    // Read files from the result folder
+    const files = await fs.promises.readdir(resultFolderPath);
+
+    // Get detailed information of each file
+    const fileDetails = await Promise.all(
+      files.map(async (file) => {
+        const filePath = path.join(resultFolderPath, file);
+        const stats = await fs.promises.stat(filePath);
+        return {
+          name: file,
+          path: filePath,
+          mtime: moment(stats.mtime).format("YYYY-MM-DD"), // Format mtime to YYYY-MM-DD
+        };
+      })
+    );
+
+    // Filter and sort CSV files by modified time (mtime)
+    const csvFiles = fileDetails
+      .filter((file) => path.extname(file.name).toLowerCase() === ".csv")
+      .sort(
+        (a, b) =>
+          moment(b.mtime, "YYYY-MM-DD").valueOf() -
+          moment(a.mtime, "YYYY-MM-DD").valueOf()
+      ); // Sort by mtime (descending)
+
+    res.json(csvFiles);
+  } catch (error) {
+    console.error("Error:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+const getCsvContent = asyncHandler(async (req, res) => {
+  try {
+    const fileName = req.params.fileName;
+    const filePath = path.join(resultFolderPath, fileName);
+
+    // Kiểm tra xem file có tồn tại không
+    await fs.promises.access(filePath);
+
+    // Đọc nội dung file
+    const content = await fs.promises.readFile(filePath, "utf-8");
+
+    res.setHeader("Content-Type", "text/csv");
+    res.send(content);
+  } catch (error) {
+    console.error("Error reading CSV file:", error);
+    if (error.code === "ENOENT") {
+      res.status(404).json({ error: "File not found" });
+    } else {
+      res.status(500).json({ error: "Unable to read file" });
+    }
+  }
+});
 
 module.exports = {
   createPredict,
@@ -205,4 +268,6 @@ module.exports = {
   createPredictwithPatient,
   getPredictPatientName,
   createPredictFileCsv,
+  getFileCsv,
+  getCsvContent,
 };
